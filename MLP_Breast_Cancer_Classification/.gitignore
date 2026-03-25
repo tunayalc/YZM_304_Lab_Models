@@ -1,0 +1,15 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+artifacts/check-run/
+artifacts/verification/
+artifacts/latest/
+artifacts/manual-run/
+dist/
+build/
+*.egg-info/
+*.pyc
+*.pyo
+*.pyd
+

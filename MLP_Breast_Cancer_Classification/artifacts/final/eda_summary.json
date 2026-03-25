@@ -1,0 +1,13 @@
+{
+  "samples": 569,
+  "feature_count": 30,
+  "train_samples": 341,
+  "val_samples": 114,
+  "test_samples": 114,
+  "class_distribution": {
+    "malignant": 212,
+    "benign": 357
+  },
+  "missing_values": 0,
+  "standardization": "StandardScaler fit on train split only"
+}
