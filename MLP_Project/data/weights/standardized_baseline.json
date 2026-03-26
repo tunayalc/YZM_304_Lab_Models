@@ -1,0 +1,28 @@
+{
+  "experiment_name": "standardized_baseline",
+  "preprocessing": "standardize",
+  "shapes": [
+    {
+      "layer": 1,
+      "weights_shape": [
+        13,
+        16
+      ],
+      "bias_shape": [
+        1,
+        16
+      ]
+    },
+    {
+      "layer": 2,
+      "weights_shape": [
+        16,
+        3
+      ],
+      "bias_shape": [
+        1,
+        3
+      ]
+    }
+  ]
+}

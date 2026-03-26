@@ -1,0 +1,4 @@
+name,preprocessing,hidden_layers,learning_rate,epochs,batch_size,l2_lambda,best_epoch,best_val_accuracy,final_train_accuracy,final_val_accuracy,test_accuracy,test_f1_macro,n_steps,description
+standardized_baseline,standardize,16,0.01,250,16,0.0,104,1.0,1.0,1.0,0.9444444444444444,0.9453132832080201,1750,Standartlastirilmis veri ile temel model.
+standardized_deeper_l2,standardize,32-16,0.01,300,16,0.001,36,1.0,1.0,0.9722222222222222,0.9722222222222222,0.9709618874773139,2100,"Standartlastirma, ikinci gizli katman ve L2 regülarizasyonu."
+raw_baseline,none,16,0.01,250,16,0.0,1,0.3888888888888889,0.4056603773584906,0.3888888888888889,0.3888888888888889,0.18666666666666668,1750,Ham veri ile tek gizli katmanli temel model.
