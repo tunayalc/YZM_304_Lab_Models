@@ -1,0 +1,11 @@
+__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
+*.pyc
+*.pyo
+*.pyd
+
+.venv/
+/.tmp/
+data/cifar-10-batches-py/
+data/cifar-10-python.tar.gz

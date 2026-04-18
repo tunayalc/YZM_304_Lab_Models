@@ -1,0 +1,18 @@
+{
+  "train_features_shape": [
+    40000,
+    256
+  ],
+  "train_labels_shape": [
+    40000
+  ],
+  "test_features_shape": [
+    10000,
+    256
+  ],
+  "test_labels_shape": [
+    10000
+  ],
+  "feature_source_model": "model_5_full_cnn_for_hybrid_comparison",
+  "hybrid_classifier": "RandomForestClassifier"
+}

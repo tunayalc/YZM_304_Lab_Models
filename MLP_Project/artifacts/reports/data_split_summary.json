@@ -1,0 +1,32 @@
+{
+  "dataset_name": "wine",
+  "total_samples": 178,
+  "feature_count": 13,
+  "target_names": [
+    "class_0",
+    "class_1",
+    "class_2"
+  ],
+  "split_counts": {
+    "train": 106,
+    "validation": 36,
+    "test": 36
+  },
+  "split_class_distribution": {
+    "train": {
+      "0": 35,
+      "1": 43,
+      "2": 28
+    },
+    "validation": {
+      "0": 12,
+      "1": 14,
+      "2": 10
+    },
+    "test": {
+      "0": 12,
+      "1": 14,
+      "2": 10
+    }
+  }
+}

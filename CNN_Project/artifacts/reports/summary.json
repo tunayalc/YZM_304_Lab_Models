@@ -1,0 +1,153 @@
+{
+  "dataset": "CIFAR-10",
+  "device": "cpu",
+  "best_epochs": {
+    "model_1_lenet_baseline": 13,
+    "model_2_lenet_improved": 18,
+    "model_3_resnet18_reference": 6,
+    "model_5_full_cnn_for_hybrid_comparison": 19
+  },
+  "split_manifest": {
+    "dataset": "CIFAR-10",
+    "seed": 42,
+    "image_shape": [
+      3,
+      32,
+      32
+    ],
+    "num_classes": 10,
+    "splits": {
+      "train_size": 40000,
+      "validation_size": 10000,
+      "test_size": 10000
+    },
+    "normalization_mean": [
+      0.49109354615211487,
+      0.48214712738990784,
+      0.4465755820274353
+    ],
+    "normalization_std": [
+      0.24700778722763062,
+      0.24354355037212372,
+      0.2616422772407532
+    ],
+    "class_distribution": {
+      "train": {
+        "airplane": 4000,
+        "automobile": 4000,
+        "bird": 4000,
+        "cat": 4000,
+        "deer": 4000,
+        "dog": 4000,
+        "frog": 4000,
+        "horse": 4000,
+        "ship": 4000,
+        "truck": 4000
+      },
+      "validation": {
+        "airplane": 1000,
+        "automobile": 1000,
+        "bird": 1000,
+        "cat": 1000,
+        "deer": 1000,
+        "dog": 1000,
+        "frog": 1000,
+        "horse": 1000,
+        "ship": 1000,
+        "truck": 1000
+      },
+      "test": {
+        "airplane": 1000,
+        "automobile": 1000,
+        "bird": 1000,
+        "cat": 1000,
+        "deer": 1000,
+        "dog": 1000,
+        "frog": 1000,
+        "horse": 1000,
+        "ship": 1000,
+        "truck": 1000
+      }
+    }
+  },
+  "results": [
+    {
+      "model": "model_1_lenet_baseline",
+      "type": "cnn",
+      "best_epoch": 13.0,
+      "image_size": 32,
+      "accuracy": 0.6363,
+      "precision_macro": 0.6343154715,
+      "recall_macro": 0.6363,
+      "f1_macro": 0.6340387137,
+      "loss": 1.048714543,
+      "feature_source_model": null
+    },
+    {
+      "model": "model_2_lenet_improved",
+      "type": "cnn",
+      "best_epoch": 18.0,
+      "image_size": 32,
+      "accuracy": 0.6832,
+      "precision_macro": 0.6838626596,
+      "recall_macro": 0.6832,
+      "f1_macro": 0.6818612602,
+      "loss": 0.9253543837,
+      "feature_source_model": null
+    },
+    {
+      "model": "model_3_resnet18_reference",
+      "type": "cnn",
+      "best_epoch": 6.0,
+      "image_size": 64,
+      "accuracy": 0.7619,
+      "precision_macro": 0.7616348453,
+      "recall_macro": 0.7619,
+      "f1_macro": 0.7592242491,
+      "loss": 0.7595232565,
+      "feature_source_model": null
+    },
+    {
+      "model": "model_5_full_cnn_for_hybrid_comparison",
+      "type": "cnn",
+      "best_epoch": 19.0,
+      "image_size": 32,
+      "accuracy": 0.7552,
+      "precision_macro": 0.7548665594,
+      "recall_macro": 0.7552,
+      "f1_macro": 0.7546646853,
+      "loss": 1.0693235733,
+      "feature_source_model": null
+    },
+    {
+      "model": "model_4_hybrid_random_forest",
+      "type": "hybrid_ml",
+      "best_epoch": null,
+      "image_size": 32,
+      "accuracy": 0.7521,
+      "precision_macro": 0.7522524663,
+      "recall_macro": 0.7521,
+      "f1_macro": 0.7520081263,
+      "loss": null,
+      "feature_source_model": "model_5_full_cnn_for_hybrid_comparison"
+    }
+  ],
+  "hybrid_feature_summary": {
+    "train_features_shape": [
+      40000,
+      256
+    ],
+    "train_labels_shape": [
+      40000
+    ],
+    "test_features_shape": [
+      10000,
+      256
+    ],
+    "test_labels_shape": [
+      10000
+    ],
+    "feature_source_model": "model_5_full_cnn_for_hybrid_comparison",
+    "hybrid_classifier": "RandomForestClassifier"
+  }
+}

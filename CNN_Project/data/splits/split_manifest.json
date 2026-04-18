@@ -1,0 +1,63 @@
+{
+  "dataset": "CIFAR-10",
+  "seed": 42,
+  "image_shape": [
+    3,
+    32,
+    32
+  ],
+  "num_classes": 10,
+  "splits": {
+    "train_size": 40000,
+    "validation_size": 10000,
+    "test_size": 10000
+  },
+  "normalization_mean": [
+    0.49109354615211487,
+    0.48214712738990784,
+    0.4465755820274353
+  ],
+  "normalization_std": [
+    0.24700778722763062,
+    0.24354355037212372,
+    0.2616422772407532
+  ],
+  "class_distribution": {
+    "train": {
+      "airplane": 4000,
+      "automobile": 4000,
+      "bird": 4000,
+      "cat": 4000,
+      "deer": 4000,
+      "dog": 4000,
+      "frog": 4000,
+      "horse": 4000,
+      "ship": 4000,
+      "truck": 4000
+    },
+    "validation": {
+      "airplane": 1000,
+      "automobile": 1000,
+      "bird": 1000,
+      "cat": 1000,
+      "deer": 1000,
+      "dog": 1000,
+      "frog": 1000,
+      "horse": 1000,
+      "ship": 1000,
+      "truck": 1000
+    },
+    "test": {
+      "airplane": 1000,
+      "automobile": 1000,
+      "bird": 1000,
+      "cat": 1000,
+      "deer": 1000,
+      "dog": 1000,
+      "frog": 1000,
+      "horse": 1000,
+      "ship": 1000,
+      "truck": 1000
+    }
+  }
+}
