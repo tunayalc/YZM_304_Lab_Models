@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import DATA_DIR, FEATURES_DIR, PLOTS_DIR, REPORTS_DIR, SPLITS_DIR, TrainingConfig
-from src.data import build_cifar10_loaders, build_cifar10_split_bundle, set_seed, write_split_manifest
+from src.data import build_mnist_loaders, build_mnist_split_bundle, set_seed, write_split_manifest
 from src.metrics import history_to_frame
 from src.models import HybridFeatureCNN, LeNetBaselineCNN, LeNetImprovedCNN, ResNet18ReferenceCNN
 from src.reporting import (
@@ -17,14 +17,14 @@ from src.reporting import (
     save_csv,
     save_json,
 )
-from src.training import extract_feature_arrays, fit_model, resolve_device, run_hybrid_random_forest
+from src.training import extract_feature_arrays, fit_model, resolve_device, run_hybrid_linear_svc
 
 
 def main() -> None:
     seed = 42
     set_seed(seed)
 
-    split_bundle = build_cifar10_split_bundle(root=DATA_DIR, seed=seed, val_size=10_000)
+    split_bundle = build_mnist_split_bundle(root=DATA_DIR, seed=seed, val_size=10_000, image_size=32)
     write_split_manifest(SPLITS_DIR / "split_manifest.json", split_bundle.split_manifest)
     plot_class_distribution(
         split_bundle.split_manifest["class_distribution"]["train"],
@@ -35,17 +35,19 @@ def main() -> None:
     standard_batch_size = 128
     reference_batch_size = 64
 
-    standard_loaders = build_cifar10_loaders(
+    standard_loaders = build_mnist_loaders(
         root=DATA_DIR,
         split_bundle=split_bundle,
         batch_size=standard_batch_size,
         image_size=32,
+        channels=1,
     )
-    reference_loaders = build_cifar10_loaders(
+    reference_loaders = build_mnist_loaders(
         root=DATA_DIR,
         split_bundle=split_bundle,
         batch_size=reference_batch_size,
-        image_size=64,
+        image_size=224,
+        channels=3,
     )
 
     experiments = [
@@ -53,7 +55,7 @@ def main() -> None:
             "model": LeNetBaselineCNN(),
             "config": TrainingConfig(
                 name="model_1_lenet_baseline",
-                epochs=15,
+                epochs=20,
                 learning_rate=1e-3,
                 batch_size=standard_batch_size,
                 weight_decay=0.0,
@@ -66,8 +68,8 @@ def main() -> None:
             "model": LeNetImprovedCNN(),
             "config": TrainingConfig(
                 name="model_2_lenet_improved",
-                epochs=18,
-                learning_rate=1e-3,
+                epochs=24,
+                learning_rate=8e-4,
                 batch_size=standard_batch_size,
                 weight_decay=1e-4,
                 image_size=32,
@@ -79,11 +81,11 @@ def main() -> None:
             "model": ResNet18ReferenceCNN(),
             "config": TrainingConfig(
                 name="model_3_resnet18_reference",
-                epochs=6,
-                learning_rate=5e-4,
+                epochs=8,
+                learning_rate=1e-4,
                 batch_size=reference_batch_size,
                 weight_decay=1e-4,
-                image_size=64,
+                image_size=224,
             ),
             "loaders": reference_loaders,
             "title": "Model 3 - Hazir ResNet18 mimarisi",
@@ -92,7 +94,7 @@ def main() -> None:
             "model": HybridFeatureCNN(),
             "config": TrainingConfig(
                 name="model_5_full_cnn_for_hybrid_comparison",
-                epochs=20,
+                epochs=24,
                 learning_rate=1e-3,
                 batch_size=standard_batch_size,
                 weight_decay=1e-4,
@@ -163,7 +165,7 @@ def main() -> None:
     print(f"Hybrid test_features shape: {test_features.shape}")
     print(f"Hybrid test_labels shape: {test_labels.shape}")
 
-    hybrid_result = run_hybrid_random_forest(
+    hybrid_result = run_hybrid_linear_svc(
         train_features=train_features,
         train_labels=train_labels,
         test_features=test_features,
@@ -173,13 +175,13 @@ def main() -> None:
     plot_confusion_matrix(
         matrix=hybrid_result["metrics"]["confusion_matrix"],
         class_names=split_bundle.class_names,
-        title="Model 4 - Hibrit RandomForest",
-        output_path=PLOTS_DIR / "confusion_matrix_model_4_hybrid_random_forest.png",
+        title="Model 4 - Hibrit LinearSVC",
+        output_path=PLOTS_DIR / "confusion_matrix_model_4_hybrid_linear_svc.png",
     )
 
     result_rows.append(
         {
-            "model": "model_4_hybrid_random_forest",
+            "model": "model_4_hybrid_linear_svc",
             "type": "hybrid_ml",
             "best_epoch": None,
             "image_size": 32,
@@ -203,7 +205,7 @@ def main() -> None:
         "test_features_shape": list(test_features.shape),
         "test_labels_shape": list(test_labels.shape),
         "feature_source_model": "model_5_full_cnn_for_hybrid_comparison",
-        "hybrid_classifier": "RandomForestClassifier",
+        "hybrid_classifier": "LinearSVC",
     }
     save_json(REPORTS_DIR / "hybrid_feature_summary.json", feature_summary)
 

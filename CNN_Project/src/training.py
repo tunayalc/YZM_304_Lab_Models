@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import LinearSVC
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -110,7 +110,8 @@ def fit_model(
 ) -> ExperimentResult:
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    trainable_parameters = [parameter for parameter in model.parameters() if parameter.requires_grad]
+    optimizer = torch.optim.Adam(trainable_parameters, lr=learning_rate, weight_decay=weight_decay)
 
     history: List[Dict[str, float]] = []
     best_epoch = 1
@@ -179,18 +180,17 @@ def extract_feature_arrays(model: nn.Module, loader: DataLoader, device: torch.d
     return np.concatenate(feature_batches), np.concatenate(label_batches)
 
 
-def run_hybrid_random_forest(
+def run_hybrid_linear_svc(
     train_features: np.ndarray,
     train_labels: np.ndarray,
     test_features: np.ndarray,
     test_labels: np.ndarray,
 ) -> Dict[str, object]:
-    classifier = RandomForestClassifier(
-        n_estimators=300,
-        max_depth=None,
-        min_samples_split=2,
+    classifier = LinearSVC(
+        C=1.0,
+        dual=False,
+        max_iter=10_000,
         random_state=42,
-        n_jobs=-1,
     )
     classifier.fit(train_features, train_labels)
     predictions = classifier.predict(test_features)

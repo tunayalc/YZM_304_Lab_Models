@@ -8,7 +8,7 @@ class LeNetImprovedCNN(nn.Module):
     def __init__(self, num_classes: int = 10, dropout_rate: float = 0.30) -> None:
         super().__init__()
         self.experiment_name = "model_2_lenet_improved"
-        self.conv1 = nn.Conv2d(3, 6, kernel_size=5, padding=2)
+        self.conv1 = nn.Conv2d(1, 6, kernel_size=5, padding=2)
         self.bn1 = nn.BatchNorm2d(6)
         self.pool1 = nn.AvgPool2d(kernel_size=2)
 

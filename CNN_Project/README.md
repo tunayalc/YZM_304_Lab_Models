@@ -1,272 +1,258 @@
-# YZM304 Derin Öğrenme II. Proje Ödevi
+# YZM304 Derin Ogrenme Dersi Proje 2
 
-**Öğrenci:** Ahmet Tunahan Yalçın  
-**Öğrenci No:** 22290665  
-**Ders:** YZM304 Derin Öğrenme  
+**Ogrenci:** Ahmet Tunahan Yalcin  
+**Ogrenci No:** 22290665  
+**Bolum:** Ankara Universitesi Yapay Zeka ve Veri Muhendisligi  
+**Donem:** 2025-2026 Bahar  
 
-## Giriş
+Bu depo, CNN kullanarak ozellik cikarma ve siniflandirma yapilan proje odevinin teslime hazir halidir. Calisma dogrudan odev metnindeki maddelere gore kurulmustur: iki acik yazilmis CNN sinifi, bir hazir literatur mimarisi, bir hibrit model ve ayni veri uzayinda karsilastirilan tam CNN modeli birlikte egitilip test edilmistir.
 
-Bu projede evrişimli sinir ağları kullanılarak görüntü verisi üzerinde özellik çıkarma ve sınıflandırma çalışması yapılmıştır. Veri seti olarak `CIFAR-10` seçilmiştir. Bunun temel nedeni veri setinin RGB yapıda olması, sınıf dağılımının dengeli olması ve hem açık biçimde yazılan CNN sınıfları hem de literatürde yaygın olarak kullanılan hazır mimariler için uygun bir karşılaştırma zemini sunmasıdır.
+## Giris
 
-Çalışma ödev maddelerine doğrudan karşılık gelecek biçimde beş model üzerinden kurulmuştur:
+Bu projede goruntu verisi uzerinde evrisimli sinir aglari ile siniflandirma ve ozellik cikarma calismasi yapilmistir. Veri seti olarak `MNIST` secilmistir. Bu secim odev metniyle dogrudan uyumludur; cunku metin benchmark veri setlerinden birinin kullanilabilecegini acikca soylemektedir. `MNIST`, tek kanalli ve dengeli bir veri seti oldugu icin hem LeNet-5 benzeri acik CNN yapilarini hem de hazir CNN mimarilerini temiz bicimde karsilastirmaya uygun bir taban sunmaktadir.
 
-1. LeNet-5 mantığına benzeyen temel CNN
-2. Aynı çekirdek hiperparametrelerini koruyan, batch normalization ve dropout eklenmiş iyileştirilmiş CNN
-3. `torchvision.models` içinden alınan hazır `ResNet18` mimarisi
-4. Tam CNN modelinden çıkarılan özelliklerle çalışan hibrit `RandomForest` modeli
-5. Dördüncü modelle aynı veri üzerinde karşılaştırılan tam CNN modeli
+Bu calismada bes model birlikte ele alinmistir:
 
-Bu yapı sayesinde hem ders kapsamında kurulan temel ağ hem de daha güçlü hazır mimariler ve hibrit yaklaşım aynı problem üzerinde birlikte incelenmiştir.
+1. LeNet-5 benzeri temel CNN
+2. Ayni cekirdek katman hiperparametrelerini koruyan, batch normalization ve dropout eklenmis iyilestirilmis CNN
+3. Hazir mimari olarak kullanilan `ResNet18`
+4. Tam CNN'den cikarilan ozelliklerle egitilen hibrit `LinearSVC`
+5. Hibrit model ile ayni veri uzayinda karsilastirilan tam CNN modeli
 
-## Yöntemler
+Boylece hem ders kapsamindaki temel CNN mantigi hem de daha guclu temsil uzayi ureten hazir ve hibrit yaklasimlar ayni problem uzerinde birlikte degerlendirilmis oldu.
 
-### Veri Seti
+## Yontem
 
-- Veri seti: `torchvision.datasets.CIFAR10`
-- Görüntü tipi: RGB
-- Giriş boyutu: `32 x 32`
-- Kanal sayısı: `3`
-- Sınıf sayısı: `10`
-- Sınıflar: `airplane`, `automobile`, `bird`, `cat`, `deer`, `dog`, `frog`, `horse`, `ship`, `truck`
+### Veri seti ve bolme
 
-### Veri Bölme
+- Veri seti: `torchvision.datasets.MNIST`
+- Goruntu tipi: gri seviye
+- Standart giris boyutu: `1 x 32 x 32`
+- Sinif sayisi: `10`
+- Siniflar: `0, 1, 2, 3, 4, 5, 6, 7, 8, 9`
 
-Veri bölme işlemi tekrarlanabilir olması için `seed = 42` ile yapılmıştır.
+Veri bolmesi `seed = 42` ile ve `StratifiedShuffleSplit` kullanilarak yapilmistir:
 
-- Eğitim alt kümesi: `40.000`
-- Doğrulama alt kümesi: `10.000`
-- Test kümesi: `10.000`
+- Egitim: `50.000`
+- Dogrulama: `10.000`
+- Test: `10.000`
 
-Doğrulama ayrımı `StratifiedShuffleSplit` ile sınıf oranları korunarak oluşturulmuştur. Bölme bilgileri `data/splits/split_manifest.json` içinde saklanmıştır.
+Bolme bilgileri `data/splits/split_manifest.json` dosyasina yazdirilmistir.
 
-### Ön İşleme
+### On isleme
 
-Veri seti üzerinde uygulanan ön işleme adımları:
+Uygulanan on isleme adimlari sadece odev metninin izin verdigi cekirdek akista tutulmustur:
 
-1. Görüntülerin tensöre dönüştürülmesi
-2. Kanal bazlı ortalama ve standart sapma değerlerinin yalnızca eğitim alt kümesinden hesaplanması
-3. Eğitim, doğrulama ve test bölmelerinin aynı normalizasyon parametreleriyle ölçeklenmesi
+1. Goruntulerin tensore cevrilmesi
+2. Egitim alt kumesinden mean/std hesaplanmasi
+3. Normalizasyon
+4. Boyutun `32 x 32` olacak sekilde eslenmesi
 
-Kullanılan normalizasyon değerleri:
+Egitim alt kumesinden hesaplanan normalizasyon degerleri:
 
-- Mean: `[0.4911, 0.4821, 0.4466]`
-- Std: `[0.2470, 0.2435, 0.2616]`
+- Mean: `[0.13101358806265007]`
+- Std: `[0.2894179023904892]`
 
-Hazır `ResNet18` modeli için aynı veri bölmesi korunmuş, yalnızca girişler `64 x 64` boyutuna yeniden ölçeklenmiştir. Bu seçim, hazır mimariyi makul hesaplama maliyetiyle kullanabilmek için yapılmıştır.
+Model 1, Model 2 ve Model 5 icin giris `1 x 32 x 32` tutulmustur.  
+Model 3 icin tek kanalli goruntu 3 kanala kopyalanmis ve `224 x 224` boyutuna getirilmistir. Bu tercih, hazir `ResNet18` mimarisini odev metninden sapmadan kullanabilmek icin yapilmistir.
 
-### Model 1: LeNet Benzeri Temel CNN
+Odev metninde acikca yer almayan ek veri cogaltma adimlari kullanilmamistir.
 
-İlk model ders kapsamındaki LeNet-5 mantığına benzer biçimde açık sınıf olarak yazılmıştır. Kullanılan temel katmanlar:
+### Model 1: LeNet benzeri temel CNN
 
-- `Conv2d(3, 6, kernel_size=5, padding=2)`
+Ilk model acik sinif olarak yazilmistir. Kullanilan katman yapisi:
+
+- `Conv2d(1, 6, kernel_size=5, padding=2)`
 - `ReLU`
 - `AvgPool2d(2)`
 - `Conv2d(6, 16, kernel_size=5)`
 - `ReLU`
 - `AvgPool2d(2)`
 - `Flatten`
-- `Linear(16*6*6, 120)`
+- `Linear(16 * 6 * 6, 120)`
 - `ReLU`
 - `Linear(120, 84)`
 - `ReLU`
 - `Linear(84, 10)`
 
-### Model 2: İyileştirilmiş CNN
+Bu model dogrudan temel referans model olarak kullanilmistir.
 
-İkinci modelde birinci modelin konvolüsyon katmanları korunmuştur. Yalnızca ağı iyileştirmesi beklenen özel katmanlar eklenmiştir:
+### Model 2: Iyilestirilmis CNN
+
+Ikinci modelde ilk modelin cekirdek konvolusyon yapisi korunmustur. Aglari iyilestirmesi beklenen ozel katmanlar uygun yerlere eklenmistir:
 
 - `BatchNorm2d`
 - `BatchNorm1d`
-- `Dropout(p=0.30)`
+- `Dropout`
 
-Bu nedenle ödev maddesindeki "ilk modeldeki katman hiperparametreleri korunmalı, iyileştirme için özel katmanlar eklenmeli" şartı doğrudan karşılanmıştır.
+Bu nedenle odev metnindeki "ilk modeldeki katmanlarin hiperparametreleri ayni kalacak, sadece batch normalization ya da dropout gibi ozel katmanlar eklenebilir" kosulu dogrudan saglanmistir.
 
-### Model 3: Hazır CNN Mimarisi
+### Model 3: Hazir CNN mimarisi
 
-Üçüncü model olarak `ResNet18` seçilmiştir.
+Ucuncu model olarak `torchvision.models` icinden `ResNet18` secilmistir.
 
 - Mimari: `ResNet18`
-- Başlangıç ayarı: `weights=None`
-- Son tam bağlı katman `10` sınıfa göre yeniden yazılmıştır
+- Baslangic ayari: `pretrained=True`
+- Son tam bagli katman: `10` sinifa gore yeniden yazilmistir
+- Egitilen kisim: sadece `layer4` ve `fc`
 
-Hazır modelde önceden eğitilmiş ağırlıklar kullanılmamıştır. Böylece karşılaştırma, dış veriyle gelen bilgiye değil aynı problem üzerinde yapılan eğitime dayandırılmıştır.
+Bu yapida daha erken bloklar dondurulmus, son blok ve siniflandirici katmani egitilmistir. Bu sayede hem hazir literatur mimarisi kullanilmis hem de egitim maliyeti makul tutulmustur.
 
-### Model 4: Hibrit Model
+### Model 5: Hibrit karsilastirma icin tam CNN
 
-Dördüncü model hibrit yapıda kurulmuştur. Önce beşinci model olan tam CNN eğitilmiş, daha sonra bu modelin `extract_features` mekanizması kullanılarak özellik dosyaları oluşturulmuştur. Bu özellikler üzerinde klasik makine öğrenmesi modeli eğitilip test edilmiştir.
+Besinci model, hem dogrudan siniflandirma yapan hem de ozellik cikarma gorevi ustlenen tam CNN mimarisidir. Giris yine `1 x 32 x 32` olarak tutulmustur. Kullanilan yapi klasik CNN mantigi icindedir:
 
-Üretilen dosyalar:
+- `Conv2d(1, 32, 3, padding=1)`
+- `BatchNorm2d`
+- `ReLU`
+- `Conv2d(32, 32, 3, padding=1)`
+- `BatchNorm2d`
+- `ReLU`
+- `MaxPool2d(2)`
+- `Conv2d(32, 64, 3, padding=1)`
+- `BatchNorm2d`
+- `ReLU`
+- `Conv2d(64, 64, 3, padding=1)`
+- `BatchNorm2d`
+- `ReLU`
+- `MaxPool2d(2)`
+- `Conv2d(64, 128, 3, padding=1)`
+- `BatchNorm2d`
+- `ReLU`
+- `Conv2d(128, 128, 3, padding=1)`
+- `BatchNorm2d`
+- `ReLU`
+- `MaxPool2d(2)`
+- `Flatten`
+- `Linear(128 * 4 * 4, 256)`
+- `ReLU`
+- `Dropout`
+- `Linear(256, 10)`
+
+Bu modelin `extract_features()` ciktilari hibrit modelin girdi uzayini olusturmustur.
+
+### Model 4: Hibrit model
+
+Dorduncu model, besinci modelden cikarilan ozelliklerle kurulmustur. Is akis su sekilde ilerlemistir:
+
+1. Model 5 egitildi
+2. `extract_features()` ile egitim ve test ozellikleri alindi
+3. Ozellikler ve etiketler `.npy` dosyalarina yazildi
+4. Bu ozelliklerle `LinearSVC` egitildi ve test edildi
+
+Olusan dosyalar:
 
 - `data/features/train_features.npy`
 - `data/features/train_labels.npy`
 - `data/features/test_features.npy`
 - `data/features/test_labels.npy`
 
-Oluşan özellik boyutları:
+Olusan boyutlar:
 
-- Eğitim özellik matrisi: `(40000, 256)`
-- Eğitim etiket vektörü: `(40000,)`
-- Test özellik matrisi: `(10000, 256)`
-- Test etiket vektörü: `(10000,)`
+- Egitim ozellik matrisi: `(50000, 256)`
+- Egitim etiket vektoru: `(50000,)`
+- Test ozellik matrisi: `(10000, 256)`
+- Test etiket vektoru: `(10000,)`
 
-Hibrit sınıflandırıcı olarak `RandomForestClassifier` seçilmiştir. Bu seçim, doğrusal olmayan karar sınırlarını öğrenebilmesi ve çıkarılmış özellik vektörleri üzerinde pratik biçimde uygulanabilmesi nedeniyle yapılmıştır.
+Boylece hibrit model maddesi, odev metnindeki ".npy dosyalarina ozellik ve label seti yazdirilacak, daha sonra kanonik bir makine ogrenmesi modeliyle egitilecek" sartini dogrudan saglamistir.
 
-### Model 5: Hibrit ile Karşılaştırılan Tam CNN
+### Kayip fonksiyonu, optimizer ve hiperparametreler
 
-Beşinci model, hibrit özellik çıkarımını da sağlayan tam CNN mimarisidir.
+Tum CNN modellerinde kayip fonksiyonu olarak `nn.CrossEntropyLoss()` kullanilmistir. Optimizer olarak `Adam` secilmistir. Hiperparametreler, odev metninin izin verdigi cercevede ve dogrulama davranisina gore asagidaki gibi tutulmustur:
 
-- `Conv2d(3, 32, kernel_size=3, padding=1)`
-- `ReLU`
-- `MaxPool2d(2)`
-- `Conv2d(32, 64, kernel_size=3, padding=1)`
-- `ReLU`
-- `MaxPool2d(2)`
-- `Conv2d(64, 128, kernel_size=3, padding=1)`
-- `ReLU`
-- `MaxPool2d(2)`
-- `Flatten`
-- `Linear(128*4*4, 256)`
-- `ReLU`
-- `Dropout(0.30)`
-- `Linear(256, 10)`
-
-Bu modelin ara temsilleri hibrit modelin girdi kümesini oluşturmuştur. Böylece 4. ve 5. modeller aynı veri üzerinde doğrudan karşılaştırılabilir hale gelmiştir.
-
-### Kayıp Fonksiyonu ve Optimizasyon
-
-CNN tabanlı modellerde kayıp fonksiyonu olarak:
-
-- `nn.CrossEntropyLoss()`
-
-optimizasyon için ise:
-
-- `Adam`
-
-kullanılmıştır.
-
-Seçilen hiperparametreler:
-
-| Model | Epoch | Learning Rate | Batch Size | Weight Decay | Giriş Boyutu |
+| Model | Epoch | Learning Rate | Batch Size | Weight Decay | Giris |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Model 1 | 15 | 0.001 | 128 | 0.0 | 32 |
-| Model 2 | 18 | 0.001 | 128 | 0.0001 | 32 |
-| Model 3 | 6 | 0.0005 | 64 | 0.0001 | 64 |
-| Model 5 | 20 | 0.001 | 128 | 0.0001 | 32 |
+| Model 1 | 20 | 0.0010 | 128 | 0.0 | 32 |
+| Model 2 | 24 | 0.0008 | 128 | 0.0001 | 32 |
+| Model 3 | 8 | 0.0001 | 64 | 0.0001 | 224 |
+| Model 5 | 24 | 0.0010 | 128 | 0.0001 | 32 |
 
-`Adam` optimizer seçimi, CIFAR-10 gibi orta ölçekli görüntü problemlerinde kararlı ve hızlı yakınsama sağlaması nedeniyle tercih edilmiştir. `ResNet18` için daha küçük epoch ve orta boy giriş çözünürlüğü kullanılarak hesaplama yükü yönetilebilir tutulmuştur.
+Bu secimlerin temel nedeni sunlardir:
 
-### Çalıştırma Adımları
+- `Adam`, bu veri setinde hizli ve kararlı yakinama sagladi
+- Model 2 icin daha kucuk ogrenme orani, batch normalization ve dropout ile daha duzgun bir dogrulama davranisi verdi
+- Model 3'te hazir ag agirliklari kullanildigi icin ogrenme orani daha dusuk tutuldu
+- Model 5'te daha guclu temsil uzayi hedeflendigi icin 24 epoch kullanildi
+
+### Tekrarlanabilirlik
+
+Projeyi bastan calistirmak icin:
 
 ```bash
 python -m venv .venv
-. .venv/Scripts/activate
 python -m pip install -r requirements.txt
 python -m pytest -q tests -p no:cacheprovider
 python -m src.run_experiments
 ```
 
-Windows PowerShell kullanan bir ortamda doğrudan script çalıştırmak için:
-
-```powershell
-.\scripts\setup_env.ps1
-.\scripts\run_pipeline.ps1
-```
-
-### Klasör Yapısı
-
-```text
-CNN_Project
-├── README.md
-├── requirements.txt
-├── .gitignore
-├── assignment
-│   └── yzm304_proje2_2526.pdf
-├── artifacts
-│   ├── plots
-│   └── reports
-├── data
-│   ├── features
-│   └── splits
-├── scripts
-│   ├── run_pipeline.ps1
-│   └── setup_env.ps1
-├── src
-│   ├── config.py
-│   ├── data.py
-│   ├── metrics.py
-│   ├── reporting.py
-│   ├── run_experiments.py
-│   ├── training.py
-│   └── models
-│       ├── hybrid_feature_cnn.py
-│       ├── lenet_baseline.py
-│       ├── lenet_improved.py
-│       └── reference_resnet.py
-└── tests
-    ├── test_metrics.py
-    ├── test_models.py
-    └── test_split_utils.py
-```
-
-## Sonuçlar
-
-Deneyler CPU üzerinde çalıştırılmıştır. Elde edilen temel sonuçlar aşağıdadır:
-
-| Model | Best Epoch | Test Accuracy | Precision Macro | Recall Macro | F1 Macro | Test Loss |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Model 1 - LeNet Baseline | 13 | 0.6363 | 0.6343 | 0.6363 | 0.6340 | 1.0487 |
-| Model 2 - LeNet Improved | 18 | 0.6832 | 0.6839 | 0.6832 | 0.6819 | 0.9254 |
-| Model 3 - ResNet18 Reference | 6 | 0.7619 | 0.7616 | 0.7619 | 0.7592 | 0.7595 |
-| Model 5 - Full CNN | 19 | 0.7552 | 0.7549 | 0.7552 | 0.7547 | 1.0693 |
-| Model 4 - Hybrid RandomForest | - | 0.7521 | 0.7523 | 0.7521 | 0.7520 | - |
-
-Bu sonuçlara göre:
-
-- Temel LeNet benzeri ağ en düşük performansı vermiştir.
-- Batch normalization ve dropout eklenmiş ikinci model ilk modele göre belirgin biçimde iyileşmiştir.
-- Hazır `ResNet18` modeli en yüksek test doğruluğunu üretmiştir.
-- Hibrit model, tam CNN modeliyle oldukça yakın sonuç vermiş ancak az farkla geride kalmıştır.
-
-Üretilen ana çıktı dosyaları:
+Ana cikti dosyalari:
 
 - `artifacts/reports/experiment_metrics.csv`
 - `artifacts/reports/summary.json`
 - `artifacts/reports/hybrid_feature_summary.json`
-- `artifacts/reports/model_1_lenet_baseline_history.csv`
-- `artifacts/reports/model_2_lenet_improved_history.csv`
-- `artifacts/reports/model_3_resnet18_reference_history.csv`
-- `artifacts/reports/model_5_full_cnn_for_hybrid_comparison_history.csv`
+- `artifacts/plots/training_curves_cnn_models.png`
+- `artifacts/plots/model_metric_comparison.png`
+- tum confusion matrix gorselleri
+
+## Sonuclar
+
+Deneyler CUDA destekli ortamda calistirilmistir. Elde edilen test sonuclari asagidadir:
+
+| Model | Best Epoch | Test Accuracy | Precision Macro | Recall Macro | F1 Macro | Test Loss |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Model 1 - LeNet Baseline | 16 | 0.9901 | 0.9899 | 0.9900 | 0.9900 | 0.0336 |
+| Model 2 - LeNet Improved | 22 | 0.9928 | 0.9928 | 0.9927 | 0.9927 | 0.0260 |
+| Model 3 - ResNet18 Reference | 4 | 0.9937 | 0.9937 | 0.9936 | 0.9936 | 0.0208 |
+| Model 4 - Hybrid LinearSVC | - | 0.9958 | 0.9958 | 0.9958 | 0.9958 | - |
+| Model 5 - Full CNN | 24 | 0.9949 | 0.9948 | 0.9949 | 0.9948 | 0.0167 |
+
+Bu sonuclarda butun modellerin `0.99` bandina ciktigi gorulmektedir. En yuksek dogrulugu hibrit `LinearSVC` modeli vermistir. Bunun anlami, Model 5'in ogrendigi ozellik uzayinin dogrusal olarak da cok iyi ayrisiyor olmasidir.
+
+Split ve ozellik raporlari:
+
+- Split: egitim `50000`, dogrulama `10000`, test `10000`
+- Normalizasyon mean/std: `[0.13101358806265007] / [0.2894179023904892]`
+- `train_features.npy`: `(50000, 256)`
+- `train_labels.npy`: `(50000,)`
+- `test_features.npy`: `(10000, 256)`
+- `test_labels.npy`: `(10000,)`
+
+Uretilen gorseller:
+
 - `artifacts/plots/train_class_distribution.png`
 - `artifacts/plots/training_curves_cnn_models.png`
 - `artifacts/plots/model_metric_comparison.png`
 - `artifacts/plots/confusion_matrix_model_1_lenet_baseline.png`
 - `artifacts/plots/confusion_matrix_model_2_lenet_improved.png`
 - `artifacts/plots/confusion_matrix_model_3_resnet18_reference.png`
-- `artifacts/plots/confusion_matrix_model_4_hybrid_random_forest.png`
+- `artifacts/plots/confusion_matrix_model_4_hybrid_linear_svc.png`
 - `artifacts/plots/confusion_matrix_model_5_full_cnn_for_hybrid_comparison.png`
 
-## Tartışma
+## Tartisma
 
-Bu çalışma, CNN tabanlı sınıflandırma problemini tek bir model üzerinden değil, beş farklı çözüm yaklaşımı üzerinden değerlendirmektedir. Böylece yalnızca nihai doğruluk değil, mimari tercihlerin etkisi de gözlenebilmektedir.
+Sonuclar birlikte degerlendirildiginde birkac net nokta ortaya cikiyor.
 
-Model 1 ders içeriğini doğrudan temsil eden temel referans modeldir. Model 2, aynı çekirdek hiperparametreleri koruyup normalizasyon ve dropout ile iyileştirme getirerek mimari tamamen değiştirilmeden de performans artışı sağlanabildiğini göstermiştir. Gerçekten de accuracy değeri `0.6363` seviyesinden `0.6832` seviyesine yükselmiştir.
+Ilk olarak, ders mantigina en yakin referans yapi olan Model 1 bile `0.9901` test dogruluguna ulasmistir. Bu, `MNIST` veri setinin CNN tabanli modeller icin uygun ve temiz bir karsilastirma zemini sundugunu gosteriyor. Model 2 ise ayni cekirdek yapiyi koruyup sadece batch normalization ve dropout ekleyerek `0.9928` seviyesine cikmistir. Yani odev metninde istenen iyilestirme mantigi gercekten olumlu sonuc vermistir.
 
-Model 3 olan `ResNet18`, hazır mimarilerin temsil gücünün daha yüksek olduğunu göstermiştir. `0.7619` test accuracy değeri ile en iyi sonucu bu model vermiştir. Bu durum, artık daha derin ve daha iyi tasarlanmış mimarilerin aynı veri kümesinde klasik LeNet yapısına göre daha güçlü genelleme sağlayabildiğini göstermektedir.
+Hazir mimari olan Model 3, `pretrained=True` ve sadece son bloklar egitilecek sekilde kullanildiginda `0.9937` accuracy uretmistir. Bu model, acik yazilan temel modellerden daha yuksek performans vermistir; ancak en yuksek skor yine de hibrit ve tam CNN tarafinda cikmistir. Bunun sebebi, proje veri setinin gorece basit olmasi ve iyi ogrenilmis ozellik uzayinin siniflari cok net ayirabilmesidir.
 
-Model 4 ve Model 5 birlikte değerlendirildiğinde hibrit yaklaşım ile tam CNN arasında çok büyük bir fark oluşmadığı görülmektedir. Tam CNN modeli `0.7552`, hibrit `RandomForest` modeli ise `0.7521` accuracy elde etmiştir. Bu yakınlık, beşinci modelden çıkarılan özelliklerin gerçekten anlamlı bir temsil uzayı oluşturduğunu göstermektedir.
+En dikkat cekici sonuc Model 4 ve Model 5 karsilastirmasinda gorulmustur. Model 5 tek basina `0.9949` accuracy uretirken, ayni modelin cikardigi ozelliklerle egitilen hibrit `LinearSVC` modeli `0.9958` accuracy vermistir. Bu fark cok buyuk degil ama anlamli; cunku odev metnindeki hibrit model fikrinin sadece formalite olmadigini, gercekten guclu bir temsil cikisina donusebildigini gosteriyor.
 
-İleri çalışma olarak aşağıdaki adımlar uygulanabilir:
+Genel olarak bakildiginda odev metnindeki tum ana kosullar saglanmistir:
 
-- veri artırma teknikleri eklemek
-- `VGG`, `MobileNet` veya `DenseNet` gibi başka hazır mimariler denemek
-- hibrit modelde `SVM` veya `Gradient Boosting` kullanarak ek karşılaştırmalar yapmak
-- öğrenme oranı zamanlayıcıları ile eğitim dinamiğini iyileştirmek
+- Goruntu veri seti kullanildi
+- On isleme acikca yapildi
+- Iki acik CNN sinifi yazildi
+- Hazir mimari kullanildi
+- Hibrit model `.npy` ozellik dosyalariyla kuruldu
+- Ayni veri uzayinda tam CNN ile karsilastirma yapildi
+- Sonuclar tablo ve gorsellerle raporlandi
 
 ## Referanslar
 
 1. LeCun, Y., Bottou, L., Bengio, Y., Haffner, P. Gradient-Based Learning Applied to Document Recognition. *Proceedings of the IEEE*, 1998.
-2. Krizhevsky, A. Learning Multiple Layers of Features from Tiny Images. Technical Report, 2009.
-3. PyTorch Documentation, [`torch.nn.Conv2d`](https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html)
-4. PyTorch Documentation, [`torch.nn.CrossEntropyLoss`](https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html)
-5. Torchvision Model Documentation, [`torchvision.models`](https://pytorch.org/vision/stable/models.html)
-6. He, K., Zhang, X., Ren, S., Sun, J. Deep Residual Learning for Image Recognition. *CVPR*, 2016.
+2. Deng, L. The MNIST Database of Handwritten Digit Images for Machine Learning Research. *IEEE Signal Processing Magazine*, 2012.
+3. He, K., Zhang, X., Ren, S., Sun, J. Deep Residual Learning for Image Recognition. *CVPR*, 2016.
+4. PyTorch Documentation, `torch.nn.Conv2d`
+5. PyTorch Documentation, `torch.nn.CrossEntropyLoss`
+6. Torchvision Documentation, `torchvision.models.resnet18`

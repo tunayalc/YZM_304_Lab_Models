@@ -8,7 +8,7 @@ class LeNetBaselineCNN(nn.Module):
     def __init__(self, num_classes: int = 10) -> None:
         super().__init__()
         self.experiment_name = "model_1_lenet_baseline"
-        self.conv1 = nn.Conv2d(3, 6, kernel_size=5, padding=2)
+        self.conv1 = nn.Conv2d(1, 6, kernel_size=5, padding=2)
         self.relu1 = nn.ReLU(inplace=True)
         self.pool1 = nn.AvgPool2d(kernel_size=2)
 
