@@ -6,3 +6,4 @@ Repo içeriği:
 
 - `MLP_Project/`: Çok katmanlı algılayıcı tabanlı birinci proje ödevi
 - `CNN_Project/`: Evrişimli sinir ağları tabanlı ikinci proje ödevi
+- `Project_4/`: IMDb film yorumlarında duygu analizi ve model karşılaştırma projesi
